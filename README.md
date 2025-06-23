@@ -62,5 +62,3 @@ npm install
 npm run dev
 ```
 Visit http://localhost:5173 in your browser.
-
->>>>>>> 7519429ad5ed0d4efeb1c1c65bc7b31988e6372b
