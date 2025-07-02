@@ -40,10 +40,12 @@ function App() {
   const [answers, setAnswers] = useState([]);
   const [element, setElement] = useState("");
   const [artwork, setArtwork] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   function handleAnswer(answer) {
-    setAnswers([...answers, answer]);
-    setCurrentQuestionIndex(currentQuestionIndex + 1);
+    setAnswers((prev) => [...prev, answer]);
+    setCurrentQuestionIndex((prev) => prev + 1);
   }
 
   function determineElement(answers) {
@@ -58,21 +60,31 @@ function App() {
   }
 
   async function fetchArtwork(keyword) {
+    setLoading(true);
+    setError(null);
+    setArtwork(null);
     try {
       const res = await fetch(
         `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${keyword}`
       );
       const data = await res.json();
-      const id = data.objectIDs ? data.objectIDs[0] : null;
-      if (id) {
-        const artRes = await fetch(
-          `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`
-        );
-        const artData = await artRes.json();
-        setArtwork(artData);
+
+      if (!data.objectIDs || data.objectIDs.length === 0) {
+        setError("No artwork found for this result.");
+        return;
       }
+
+      const id = data.objectIDs[0];
+      const artRes = await fetch(
+        `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`
+      );
+      const artData = await artRes.json();
+      setArtwork(artData);
     } catch (err) {
       console.error("Error fetching artwork:", err);
+      setError("Something went wrong while fetching artwork.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -99,7 +111,12 @@ function App() {
                 onAnswer={handleAnswer}
               />
             ) : (
-              <Results element={element} artwork={artwork} />
+              <Results
+                element={element}
+                artwork={artwork}
+                loading={loading}
+                error={error}
+              />
             )
           }
         />
